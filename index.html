@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Favorite Movie Giff Images</title>
+  <style type="text/css">
+    button,
+    div,
+    form,
+    input {
+      margin: 10px;
+    }
+    button {
+        /* change normalization small caps to normal capitalization */
+        text-transform: capitalize;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>Movie Giff Image Search</h1>
+
+    <!-- Rendered Buttons will get Injected Here in the DOM  -->
+    <div id="buttons-view"></div>
+
+    <form id="movie-form">
+      <label for="movie-input">Movie Title</label>
+      <input type="text" id="movie-input">
+      <br>
+
+      <!-- Button adds new movie giff search button  -->
+      <input id="add-movie" type="submit" value="Add Search">
+    </form>
+
+    <!-- Movies Giffs Injected in DOM here -->
+    <div id="giff-view"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript">
+
+      // Initial array of movie gifg searches
+      var movies = ["the matrix", "the notebook", "mr. nobody", "the lion king"];
+
+      // displayMovieInfo function re-renders the HTML to display the appropriate content
+      function displayMovieInfo() {
+
+        var movie = $(this).text();
+        var queryURL = "https://api.giphy.com/v1/gifs/search?q=" + movie + "&limit=10&api_key=Tc9D8oARPz6bOLeW5tqqt7CKynrcw5qG"; 
+        
+        // Creating an AJAX call for the specific movie button being clicked
+        $.ajax({
+          url: queryURL,
+          method: "GET"
+        // "response" is return from giffy DB API
+        }).then(function(response) {
+
+        // initialize array with giffy DB API response
+            var giffArray = response.data;
+
+        // Clear DOM display at this holder ID
+            $('#giff-view').empty();
+
+        // Call giff render function 
+            renderGiffs(giffArray)
+            
+        });
+
+      }
+      // Function for DOM rendering of giff, rating, and space
+      function renderGiffs(giffArray){
+
+        // loop through all elements of giffArray 
+        for (var i = 0; i < giffArray.length; i++) {
+
+            // create giff wrap div element and add class
+            var giffWrap = $('<div>').addClass('giff-wrap');
+            
+            // img
+            var giffImg = $('<img>');
+            giffImg.attr('src', giffArray[i].images.original_still.url);
+            giffImg.attr('alt', giffArray[i].title);
+            giffImg.attr('data-still', giffArray[i].images.original_still.url);
+            giffImg.attr('data-animate', giffArray[i].images.original.url);
+            giffImg.addClass('giff');
+
+            // rating
+            var giffRating = $('<p>').text("Rating: "+ giffArray[i].rating);
+            var giffTitle = $('<p>').text(giffArray[i].title);
+            var giffSpace = $('<br>');
+            // grabbing giffWrap variable with div and adding img and rating
+           $(giffWrap).append(giffImg, giffRating, giffTitle, giffSpace);
+            // adding updated giffWrap to html (giff-view)
+            $('#giff-view').append(giffWrap);
+        }
+      }
+
+      // Function for displaying movie data
+      function renderButtons() {
+
+        // Deleting the search buttons on refresh
+        $("#buttons-view").empty();
+
+        // Looping through the giff data array
+        for (var i = 0; i < movies.length; i++) {
+
+          // Generate buttons for each movie giff search
+          var a = $("<button>");
+          // Adding movie-btn class
+          a.addClass("movie-btn");
+          // Adding a data-attribute
+          a.attr("data-name", movies[i]);
+          // Adding button movie title text
+          a.text(movies[i]);
+          // Adding button to "buttons-view" div
+          $("#buttons-view").append(a);
+        }
+      }
+    // Create still/animate toggling function
+      function imgSwap(){
+          var selectedImg = $(this);
+          var animate = selectedImg.data('animate');
+          var still = selectedImg.data('still');
+
+          if(selectedImg.attr('src') ===  animate){
+            selectedImg.attr('src', still);
+          }else{
+            selectedImg.attr('src', animate);
+          }
+      }
+
+      // This function adds search buttons 
+      $("#add-movie").on("click", function(event) {
+        event.preventDefault();
+        // This line grabs the input from the textbox
+        var movie = $("#movie-input").val().trim().toLowerCase();
+        // ... and adds it to the movie title search array
+            movies.push(movie);
+
+        // Calling renderButtons function which DOM renders the search buttons with the input
+        renderButtons();
+      });
+
+      // Click event listener for all elements with a class of "movie-btn" (search buttons) that calls function to render giffs, rating, title, and space
+      $(document).on("click", ".movie-btn", displayMovieInfo);
+      // Click event listener for clicks on giff images with class of "giff"
+      $(document).on("click", ".giff", imgSwap);
+
+      // Calling the renderButtons function to display the intial buttons
+      renderButtons();
+    </script>
+  </div>
+</body>
+
+</html>
